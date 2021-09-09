@@ -145,6 +145,9 @@ ggplot(cadeia, aes(x=mu1, y=mu2) ) +
   ylab(expression(mu[2]))
 cor(cadeia$mu1, cadeia$mu2) #Baixa ou nenhuma correlacao entre as amostras
 
+par(mfrow = c(1,1))
+plot(density(cadeia$lambda))
+
 #(c)
 ##lambda|x ~ N(m, v)
 ##d = 3*n1*n2 + 2*(n1+n2) + 1
@@ -260,9 +263,9 @@ resultado <- MH_beta_gama(M = 10000, x, st.dev = c(.8,.8))
 resultado$aceita #Checar se a taxa de aceitacao eh adequada
 
 par(mfrow = c(2,1))
-plot(resultado$cadeia$alfa1, ylab = expression(alfa[1]), xlab = "Passos de MH",
+plot(resultado$cadeia$alfa1, ylab = expression(alpha[1]), xlab = "Passos de MH",
      type = 'l')
-plot(resultado$cadeia$alfa2, ylab = expression(alfa[2]), xlab = "Passos de MH",
+plot(resultado$cadeia$alfa2, ylab = expression(alpha[2]), xlab = "Passos de MH",
      type = 'l')
 
 
@@ -305,27 +308,13 @@ lprob_disc <- function(Z, lambda, i, j, viz, vals_Z){
   #Identificando os vizinhos
   viz_Z <- viz[which(viz[,1] == i & viz[,2] == j), 3:4]
   #Numero de vizinhos
-  n_viz <- dim(viz_Z)[2]
-  #Acumulando valores dos vizinhos
-  soma_viz <- 0
-  for(k in 1:n_viz){
-    soma_viz <- soma_viz + Z[viz_Z[k,1] + 1, viz_Z[k,2] + 1]
-  }
-  return(-(4*lambda*n_viz)*(vals_Z - soma_viz/n_viz)^2/2)
-}
-
-#Log da funcao de densidade sem constante de proporcionalidade
-lprob_cont <- function(Z, lambda, i, j, viz){
-  #Identificando os vizinhos
-  viz_Z <- viz[which(viz[,1] == i & viz[,2] == j), 3:4]
-  #Numero de vizinhos
   n_viz <- dim(viz_Z)[1]
   #Acumulando valores dos vizinhos
   soma_viz <- 0
   for(k in 1:n_viz){
     soma_viz <- soma_viz + Z[viz_Z[k,1] + 1, viz_Z[k,2] + 1]
   }
-  return(-(4*lambda*n_viz)*(Z[i,j] - soma_viz/n_viz)^2/2)
+  return(-(4*lambda*n_viz)*(vals_Z - soma_viz/n_viz)^2/2)
 }
 
 
@@ -350,13 +339,13 @@ Gibbs_discreto <- function(M, lambda, A, vals_Z = 0:1){
     }
     Z[,,k] <- Z.novos
   }
-  #Removendo o prmeiro caso
+  #Removendo o primeiro caso
   Z <- Z[,,-1]
   return(Z)
 }
 
 m <- 5
-cadeia_binaria <- Gibbs_discreto(M = m^2, lambda = 1, A = 0:10, vals_Z = 0:1)
+cadeia_binaria <- Gibbs_discreto(M = m^2, lambda = .5, A = 0:10, vals_Z = 0:1)
 
 par(mar=c(.5, .5, .5, .5), mfrow = c(m,m))
 for(i in 1:dim(cadeia_binaria)[3]){
