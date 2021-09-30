@@ -1,7 +1,7 @@
 ################################################################################
 #################_____________________________________________##################
 #################                                             ##################
-#################   Lista de Fixação 4: MC Transdimensional   ##################
+#################   Lista de FixaÃ§Ã£o 4: MC Transdimensional   ##################
 #################_____________________________________________##################
 #################                                             ##################
 ################################################################################
@@ -14,8 +14,9 @@
 #Posteriori dado o modelo M - Normal multivariada
 #V = (X'X + I/v2)^(-1)
 #beta | Y, X, M ~ N(VX'Y, V)
+#VX'Y = (X'X + I/v2)^(-1)X'Y => (X'X)^(-1)X'Y = EMQ
 
-############################# (a) Geração dos dados ############################
+############################# (a) GeraÃ§Ã£o dos dados ############################
 gera_poly <- function(n, gerador.x = function(n) rnorm(n),
                       betas, semente){
   set.seed(semente)
@@ -32,7 +33,7 @@ gera_poly <- function(n, gerador.x = function(n) rnorm(n),
 }
 
 dados <- gera_poly(100, betas = c(3,8,5), semente = 42)
-lm(Y ~ X + I(X^2), dados)$coef #Testando se está gerando corretamente
+lm(Y ~ X + I(X^2), dados)$coef #Testando se estÃ¡ gerando corretamente
 
 
 
@@ -47,7 +48,9 @@ poly_matrix <- function(X, grau){
 
 passo_Gibbs <- function(sims, Y, X_poly, v2){
   dim_X <- dim(X_poly)[2]
-  chol_XX <- chol(t(X_poly)%*%X_poly + diag(1/v2, dim_X))
+  chol_XX <- chol(
+    t(X_poly)%*%X_poly + diag(1/v2, dim_X)
+    )
   X_inv <- chol2inv(chol_XX)
   chol_inv <- chol(X_inv)
   beta_Gibbs <- matrix(NA, nrow = sims, ncol = dim_X)
@@ -58,18 +61,18 @@ passo_Gibbs <- function(sims, Y, X_poly, v2){
 }
 
 #Aqui, usaremos uma proposta de Gibbs para os betas sendo usados pelo modelo
-#e adicionaremos um ruído branco aos outros
-RJmetropolis <- function(B, #Número de simulações
-                       dados, #Observações geradas (Y e X num dataframe)
-                       grau, #Grau máximo do polinômio
-                       v2, #Variancia da priori dos betas
+#e adicionaremos um ruÃ­do branco aos outros
+RJmetropolis <- function(B, #NÃºmero de simulaÃ§Ãµes
+                       dados, #ObservaÃ§Ãµes geradas (Y e X num dataframe)
+                       grau, #Grau mÃ¡ximo do polinÃ´mio
+                       v2, #VariÃ¢ncia da priori dos betas
                        p, #Probabilidade de fazer uma proposta transdimensional
                        semente #Semente, para reproducibilidade
                        ){
   set.seed(semente)
   Y <- dados$Y
   X_poly <- poly_matrix(dados$X,grau)
-  #Inicializando os parâmetros (modelo, intercepto e grau do polinômio)
+  #Inicializando os parÃ¢metros (modelo, intercepto e grau do polinÃ´mio)
   parm_RJ <- matrix(NA, nrow = B+1, ncol = grau + 2)
   parm_RJ[1,] <- c(0, lm(Y ~ -1 + X_poly)$coef)
   
@@ -91,11 +94,11 @@ RJmetropolis <- function(B, #Número de simulações
       }
     }
     
-    #Etapa 2: Log da razão
-    ##Obs1: A proposta de Gibbs não precisa entrar no cálculo
-    ##Obs2: A proposta do ruído branco também pode ser desconsiderada no cálculo
-    ##Obs3: Pelo fato da escolha do modelo ser uniforme, as probs são iguais
-    ##Portanto, o aceite é automático, a não ser que seja um caso transdimensional
+    #Etapa 2: Log da razÃ£o
+    ##Obs1: A proposta de Gibbs nÃ£o precisa entrar no cÃ¡lculo
+    ##Obs2: A proposta do ruÃ­do branco tambÃ©m pode ser desconsiderada no cÃ¡lculo
+    ##Obs3: Pelo fato da escolha do modelo ser uniforme, as probs sÃ£o iguais
+    ##Portanto, o aceite Ã© automÃ¡tico, a nÃ£o ser que seja um caso transdimensional
     if(prop[1] != parms[1]){
       lrazao <- log(p) - log(1-p) + 
         sum(
@@ -115,16 +118,16 @@ RJmetropolis <- function(B, #Número de simulações
 
 
 colMeans(
-  passo_Gibbs(sims=10000, Y = dados$Y, X_poly = poly_matrix(dados$X,3), v2=1000)
+  passo_Gibbs(sims=10000, Y = dados$Y, X_poly = poly_matrix(dados$X,2), v2=1000)
   )
 
 cadeia <- RJmetropolis(B = 10000, dados = dados, grau = 3, v2 = 1000, p = 0.2,
                        semente = 24)
-table(cadeia[,1])
+table(cadeia[,1])/10000
 
 
 
-#################### (c) Estimativas do modelo mais provável ###################
+#################### (c) Estimativas do modelo mais provÃ¡vel ###################
 modelo <- which.max(table(cadeia[,1]))
 betas <- cadeia[which(cadeia[,1] == modelo),2:(modelo+2)]
 for(i in 0:(dim(betas)[2]-1)){
@@ -158,4 +161,4 @@ EY <- function(cadeia, x){
 
 x = 2.1
 
-c(EY(cadeia, x), sum(c(1,x,x^2)*c(3,8,5)))
+c(EY(cadeia, x), 3 + 8*x + 5*x^2)
