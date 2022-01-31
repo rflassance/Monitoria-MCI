@@ -1,3 +1,6 @@
+#Exemplo Gibbs: Salários na área de dados na Índia
+#Fonte: https://www.kaggle.com/iamsouravbanerjee/analytics-industry-salaries-2022-india
+
 library(stringr)
 
 salarios <- read.csv("Salary Dataset.csv")
